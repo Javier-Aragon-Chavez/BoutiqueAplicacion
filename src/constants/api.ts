@@ -1,1 +1,1 @@
-export const API_URL = 'https://PENDIENTE.ngrok-free.app';
+export const API_URL = 'http://192.168.0.185:8080';
