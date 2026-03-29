@@ -14,6 +14,7 @@
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",
+    "axios": "^1.14.0",
     "expo": "55.0.10-canary-20260328-bdc6273",
     "expo-constants": "55.0.10-canary-20260328-bdc6273",
     "expo-dev-client": "55.0.20-canary-20260328-bdc6273",
