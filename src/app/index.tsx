@@ -1,98 +1,151 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { useEffect, useState } from 'react';
+import {
+  View, Text, FlatList, ActivityIndicator,
+  StyleSheet, SafeAreaView, StatusBar
+} from 'react-native';
+import { getPrendas } from '../services/prendas';
+import { VwPrendaCompleta } from '../constants/types';
 
 export default function HomeScreen() {
+  const [prendas, setPrendas]   = useState<VwPrendaCompleta[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+
+  useEffect(() => {
+    getPrendas()
+      .then(setPrendas)
+      .catch(() => setError('No se pudo conectar a la API'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <View style={styles.center}>
+      <ActivityIndicator size="large" color="#c9a96e" />
+      <Text style={styles.loadingText}>Cargando prendas...</Text>
+    </View>
+  );
+
+  if (error) return (
+    <View style={styles.center}>
+      <Text style={styles.errorText}>{error}</Text>
+    </View>
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0d0d0d" />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          SILHOUETTE<Text style={styles.headerEm}>UX</Text>
+        </Text>
+        <Text style={styles.headerSub}>Colección 2025</Text>
+      </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <FlatList
+        data={prendas}
+        keyExtractor={item => item.prendaId?.toString() ?? item.id?.toString()}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.cardTop}>
+              <Text style={styles.cardNombre}>{item.nombre}</Text>
+              <Text style={styles.cardGenero}>{item.genero}</Text>
+            </View>
+            <View style={styles.cardBottom}>
+              <Text style={styles.cardTag}>{item.coleccion}</Text>
+              <Text style={styles.cardTag}>{item.temporada}</Text>
+            </View>
+          </View>
+        )}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0d0d0d',
+  },
+  center: {
+    flex: 1,
+    backgroundColor: '#0d0d0d',
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    color: '#888',
+    fontSize: 14,
+  },
+  errorText: {
+    color: '#c0392b',
+    fontSize: 15,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 4,
+  },
+  headerEm: {
+    color: '#c9a96e',
+    fontStyle: 'italic',
+  },
+  headerSub: {
+    color: '#666',
+    fontSize: 12,
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+  list: {
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#141414',
+    borderRadius: 10,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+    marginBottom: 12,
+  },
+  cardTop: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    marginBottom: 10,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  cardNombre: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
+  cardGenero: {
+    color: '#c9a96e',
+    fontSize: 12,
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  cardBottom: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cardTag: {
+    color: '#555',
+    fontSize: 11,
+    backgroundColor: '#1f1f1f',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    letterSpacing: 0.5,
   },
 });
